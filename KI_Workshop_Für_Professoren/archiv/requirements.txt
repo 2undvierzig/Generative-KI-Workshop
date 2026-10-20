@@ -1,0 +1,9 @@
+llama-index==0.12.37
+llama-index-llms-ollama==0.5.6
+llama-index-embeddings-ollama==0.6.0
+marker-pdf==1.7.3
+streamlit==1.45.1
+python-dotenv==1.1.0
+chromadb==1.0.10
+pypdf==5.5.0
+requests==2.32.3

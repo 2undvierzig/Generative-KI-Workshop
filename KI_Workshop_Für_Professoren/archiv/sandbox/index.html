@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAWKI-System UML-Diagramm</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .diagram-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            min-height: 400px;
+        }
+        img {
+            max-width: 100%;
+            max-height: 800px;
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            font-family: monospace;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+        .format-btn {
+            flex: 1;
+        }
+        #debug-info {
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 14px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            white-space: pre-wrap;
+            display: none;
+        }
+        .status {
+            margin-top: 10px;
+            font-style: italic;
+            color: #666;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .loading {
+            margin-top: 10px;
+            font-style: italic;
+        }
+        .checkbox-container {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>HAWKI-System UML-Diagramm</h1>
+    
+    <div class="container">
+        <div class="diagram-container">
+            <img id="uml-diagram" src="" alt="UML-Diagramm wird geladen...">
+            <p id="loading-status" class="loading">Das Diagramm wird geladen...</p>
+        </div>
+        
+        <div class="controls">
+            <button class="format-btn" data-format="svg">Als SVG anzeigen</button>
+            <button class="format-btn" data-format="png">Als PNG anzeigen</button>
+        </div>
+        
+        <div class="checkbox-container">
+            <input type="checkbox" id="show-debug" name="show-debug">
+            <label for="show-debug">Debug-Informationen anzeigen</label>
+        </div>
+        
+        <div id="debug-info"></div>
+        
+        <h3>PlantUML-Quelltext (bearbeitbar)</h3>
+        <textarea id="uml-source"></textarea>
+        <button id="render-btn">Diagramm neu rendern</button>
+        
+        <div class="controls">
+            <button id="direct-link-btn">Direkter Link zum PlantUML-Server</button>
+            <button id="fallback-btn">Fallback-Methode verwenden</button>
+        </div>
+    </div>
+
+    <script>
+        // UML-Quelltext
+        const defaultUml = `@startuml
+' Einfaches Beispiel-UML
+class Benutzer {
+  +String name
+  +String email
+  +anmelden()
+  +abmelden()
+}
+
+class Kurs {
+  +String titel
+  +String beschreibung
+  +hinzufügen()
+  +entfernen()
+}
+
+Benutzer --> Kurs : belegt >
+@enduml`;
+
+        // PlantUML-Encoder
+        // Basierend auf der offiziellen JavaScript-Version
+        const plantumlEncoder = {
+            encode: function(text) {
+                let pngEnabled = false;
+                const data = this._utf8_encode(text);
+                const compressed = this._encode64(this._deflate(data, pngEnabled));
+                return compressed;
+            },
+
+            _utf8_encode: function(text) {
+                text = text.replace(/\r\n/g, "\n");
+                let utftext = "";
+
+                for (let n = 0; n < text.length; n++) {
+                    const c = text.charCodeAt(n);
+
+                    if (c < 128) {
+                        utftext += String.fromCharCode(c);
+                    } else if ((c > 127) && (c < 2048)) {
+                        utftext += String.fromCharCode((c >> 6) | 192);
+                        utftext += String.fromCharCode((c & 63) | 128);
+                    } else {
+                        utftext += String.fromCharCode((c >> 12) | 224);
+                        utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+                        utftext += String.fromCharCode((c & 63) | 128);
+                    }
+                }
+                return utftext;
+            },
+
+            _deflate: function(data, pngEnabled) {
+                // Dies ist eine vereinfachte Version, die tatsächliche Kompression fehlt
+                // Für eine vollständige Implementierung wäre eine externe Bibliothek wie pako notwendig
+                return data;
+            },
+
+            _encode64: function(data) {
+                const r = "";
+                const table = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_";
+                let i = 0;
+                let c = 0;
+                while (i < data.length) {
+                    c = (data.charCodeAt(i++) & 0xff) << 16;
+                    if (i < data.length) c |= (data.charCodeAt(i++) & 0xff) << 8;
+                    if (i < data.length) c |= data.charCodeAt(i++) & 0xff;
+                    
+                    const chunks = [
+                        table.charAt((c >> 18) & 0x3f),
+                        table.charAt((c >> 12) & 0x3f),
+                        table.charAt((c >> 6) & 0x3f),
+                        table.charAt(c & 0x3f)
+                    ];
+                    
+                    return chunks.join('');
+                }
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const umlTextarea = document.getElementById('uml-source');
+            const umlImage = document.getElementById('uml-diagram');
+            const renderBtn = document.getElementById('render-btn');
+            const formatBtns = document.querySelectorAll('.format-btn');
+            const debugInfo = document.getElementById('debug-info');
+            const showDebug = document.getElementById('show-debug');
+            const loadingStatus = document.getElementById('loading-status');
+            const directLinkBtn = document.getElementById('direct-link-btn');
+            const fallbackBtn = document.getElementById('fallback-btn');
+            
+            let currentFormat = 'svg';
+            let debugLog = [];
+
+            // Debug-Funktion
+            function log(message, type = 'info') {
+                const timestamp = new Date().toISOString();
+                const logEntry = `${timestamp} [${type.toUpperCase()}] ${message}`;
+                debugLog.push(logEntry);
+                debugInfo.textContent = debugLog.join('\n');
+                console.log(logEntry);
+                return logEntry;
+            }
+
+            // Debug-Checkbox Event
+            showDebug.addEventListener('change', function() {
+                debugInfo.style.display = this.checked ? 'block' : 'none';
+            });
+
+            // Initialisieren mit Standard-UML
+            umlTextarea.value = defaultUml;
+            log('Anwendung initialisiert');
+            renderUML();
+
+            // Event-Listener
+            renderBtn.addEventListener('click', renderUML);
+            
+            formatBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    currentFormat = this.getAttribute('data-format');
+                    log(`Format geändert zu ${currentFormat}`);
+                    renderUML();
+                });
+            });
+
+            // Direkter Link zum PlantUML-Server
+            directLinkBtn.addEventListener('click', function() {
+                const umlSource = umlTextarea.value;
+                const encodedUml = btoa(unescape(encodeURIComponent(umlSource))).replace(/\+/g, '-').replace(/\//g, '_');
+                const url = `https://www.plantuml.com/plantuml/uml/~1${encodedUml}`;
+                log(`Direktlink generiert: ${url}`);
+                window.open(url, '_blank');
+            });
+
+            // Fallback-Methode
+            fallbackBtn.addEventListener('click', function() {
+                log('Fallback-Methode wird verwendet');
+                renderUMLFallback();
+            });
+
+            // Bild-Ladeereignisse
+            umlImage.addEventListener('load', function() {
+                log('Bild erfolgreich geladen', 'success');
+                loadingStatus.textContent = 'Diagramm erfolgreich geladen!';
+                loadingStatus.className = 'success';
+            });
+
+            umlImage.addEventListener('error', function(e) {
+                const errorMsg = `Fehler beim Laden des Bildes: ${e.type}`;
+                log(errorMsg, 'error');
+                loadingStatus.textContent = errorMsg;
+                loadingStatus.className = 'error';
+            });
+
+            // Hauptrender-Methode
+            function renderUML() {
+                const umlSource = umlTextarea.value;
+                loadingStatus.textContent = 'Diagramm wird geladen...';
+                loadingStatus.className = 'loading';
+                
+                try {
+                    // Direkter Ansatz mit korrekter Kodierung
+                    log('Verwende Huffman-Kodierung mit ~1 Präfix');
+                    // Einfache Base64-ähnliche Kodierung verwenden, die PlantUML erwartet
+                    const encodedUml = btoa(unescape(encodeURIComponent(umlSource))).replace(/\+/g, '-').replace(/\//g, '_');
+                    
+                    // Füge ~1 Präfix für Huffman-kodierte Strings hinzu
+                    const url = `https://www.plantuml.com/plantuml/${currentFormat}/~1${encodedUml}`;
+                    log(`Generierte URL: ${url.substring(0, 100)}...`);
+                    
+                    umlImage.src = url;
+                } catch (error) {
+                    log(`Fehler: ${error.message}`, 'error');
+                    loadingStatus.textContent = `Fehler beim Generieren des Diagramms: ${error.message}`;
+                    loadingStatus.className = 'error';
+                }
+            }
+
+            // Alternative Render-Methode
+            function renderUMLFallback() {
+                const umlSource = umlTextarea.value;
+                loadingStatus.textContent = 'Fallback wird versucht...';
+                loadingStatus.className = 'loading';
+                
+                try {
+                    // Alternative Methode: Mit speziellem Format-Parameter
+                    log('Verwende alternative Kodierung');
+                    // Base64-Kodierung mit ~1 Präfix
+                    const encodedUml = btoa(unescape(encodeURIComponent(umlSource))).replace(/\+/g, '-').replace(/\//g, '_');
+                    const url = `https://www.plantuml.com/plantuml/${currentFormat}/~1${encodedUml}`;
+                    log(`Fallback URL: ${url.substring(0, 100)}...`);
+                    
+                    umlImage.src = url;
+                } catch (error) {
+                    log(`Fallback-Fehler: ${error.message}`, 'error');
+                    loadingStatus.textContent = `Fallback fehlgeschlagen: ${error.message}`;
+                    loadingStatus.className = 'error';
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,856 @@
+{
+  "name": "My workflow 4",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fe138128-50d5-469f-8c0b-0af8c873f198",
+              "name": "categories",
+              "type": "array",
+              "value": "={{ $input.all().flatMap(item => item.json.categories).unique() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5df6fca3-30f7-4a0d-b9ff-7fa27f0a2c76",
+      "name": "Get Unique Categories",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1500,
+        1240
+      ],
+      "executeOnce": true,
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "c6dc4c85-81b2-4536-be5a-bfdccff00e6b",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "position": [
+        3560,
+        1840
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4a266505-4b88-41cf-bf22-f38c705c27e5",
+              "name": "workflow_id",
+              "type": "number",
+              "value": "={{ $('Workflows to Items').item.json.workflow.id }}"
+            },
+            {
+              "id": "df3348e2-b6ec-4c38-a146-c38be9b830bc",
+              "name": "workflow_name",
+              "type": "string",
+              "value": "={{ $('Workflows to Items').item.json.workflow.name }}"
+            },
+            {
+              "id": "b4646059-748f-407a-b829-d6605d5ab683",
+              "name": "workflow_desc",
+              "type": "string",
+              "value": "={{ $json.response.text }}"
+            },
+            {
+              "id": "eac0d9ab-9445-4bc2-9e64-160fe44b9ace",
+              "name": "workflow_created_at",
+              "type": "string",
+              "value": "={{ $('Workflows to Items').item.json.workflow.createdAt }}"
+            },
+            {
+              "id": "24a3c0cb-224c-4ce6-b59e-38b10ab2c02f",
+              "name": "author_id",
+              "type": "number",
+              "value": "={{ $('Workflows to Items').item.json.workflow.user.id }}"
+            },
+            {
+              "id": "a2b8a52f-be72-484c-aa86-582b73be1859",
+              "name": "author_name",
+              "type": "string",
+              "value": "={{ $('Workflows to Items').item.json.workflow.user.name }}"
+            },
+            {
+              "id": "ae735511-8c7c-4bef-b6ac-cfe3d4b87b4f",
+              "name": "author_username",
+              "type": "string",
+              "value": "={{ $('Workflows to Items').item.json.workflow.user.username }}"
+            },
+            {
+              "id": "2dc1f59f-a854-4322-85df-c5998f782dcd",
+              "name": "category",
+              "type": "string",
+              "value": "={{ $('For Each Category').item.json.category }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "64a1bceb-bb11-4274-b933-928d08f0ce96",
+      "name": "Collect Fields",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        3360,
+        1740
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "8d5eb484-f908-4d21-91a9-0330cf878db8",
+      "name": "For Each Category",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        2580,
+        1240
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "workflows",
+        "options": {
+          "destinationFieldName": "workflow"
+        }
+      },
+      "id": "f95be4a6-11c9-49a7-af38-c5b9f1232153",
+      "name": "Workflows to Items",
+      "type": "n8n-nodes-base.splitOut",
+      "position": [
+        2740,
+        1740
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=## Description\n```\n{{ $json.workflow.description.replaceAll('#', '') }}\n```"
+      },
+      "id": "029c1a2c-b4dc-46f2-8244-57d16337b1b6",
+      "name": "Workflow Summarizer",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        3000,
+        1740
+      ],
+      "typeVersion": 1.5
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "id": "67cc056d-afda-4ece-9732-541d4590fa4f",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        2920,
+        940
+      ],
+      "typeVersion": 3.1
+    },
+    {
+      "parameters": {},
+      "id": "aab11dfa-a95d-4b6a-9715-7e9a069608ec",
+      "name": "No Operation, do nothing",
+      "type": "n8n-nodes-base.noOp",
+      "position": [
+        4180,
+        940
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fbd0ad94-e5aa-4082-81f5-d7b2e08dfbcf",
+              "name": "workflows",
+              "type": "array",
+              "value": "={{\n$json.categories\n  .flatMap(cat =>\n    $('Flatten Workflows').first().json.workflows.filter(item => item.category === cat)\n  )\n}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4aa1049d-f2fc-414e-8dba-5b18fbb999c0",
+      "name": "Get Relevant Workflows",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        3640,
+        1120
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "17a82dd9-3fcf-44d9-b5da-bf89a1f53d59",
+              "name": "workflows",
+              "type": "array",
+              "value": "={{\n$input.all().flatMap(item => item.json.data)\n}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0aac3819-32ae-4898-80a8-8eed0cf8ccf8",
+      "name": "Flatten Workflows",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        2760,
+        1120
+      ],
+      "executeOnce": true,
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "operation": "removeItemsSeenInPreviousExecutions",
+        "dedupeValue": "={{ $('For Each Subscriber').item.json.name.toSnakeCase() }}_{{ $json.workflow_id }}",
+        "options": {}
+      },
+      "id": "beae067d-d0af-462d-b36a-5c96c13f0881",
+      "name": "Remove Already Seen",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "position": [
+        4000,
+        1120
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "workflows",
+        "options": {}
+      },
+      "id": "1f792a2b-6a96-476b-8164-940ff72caa68",
+      "name": "Workflow to Items",
+      "type": "n8n-nodes-base.splitOut",
+      "position": [
+        3820,
+        1120
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "efedda63-a802-4278-b224-e8d752f8ce2b",
+      "name": "Combine Workflows",
+      "type": "n8n-nodes-base.aggregate",
+      "position": [
+        4180,
+        1120
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d69921eb-b518-4614-af63-e67a521ee373",
+              "name": "name",
+              "type": "string",
+              "value": "={{ $('For Each Subscriber').item.json.name }}"
+            },
+            {
+              "id": "01ee6e0a-9d03-42f6-ad46-68b9df861679",
+              "name": "email",
+              "type": "string",
+              "value": "={{ $('For Each Subscriber').item.json.email }}"
+            },
+            {
+              "id": "5263e512-1b24-43c8-9033-6547dab2811b",
+              "name": "categories",
+              "type": "array",
+              "value": "={{ $('For Each Subscriber').item.json.categories }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "96e9fd89-8f65-4067-a04e-d41c8e56a247",
+      "name": "With User Reference",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        4360,
+        1120
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "html": "<h1>New Workflows for {{ $now.format('DD') }}</h1>\n{{\n$json.categories\n  .filter(cat =>\n    $json.data.filter(item => item.category === cat).length > 0\n  )\n  .map(category => `\n    <h2>${category.toSentenceCase()}</h2>\n    <ul>\n    ${$json.data\n      .filter(workflow => workflow.category === category)\n      .map(workflow => `\n      <li>\n        <a href=\"https://n8n.io/workflows/${workflow.workflow_id}\">\n          <h3>${workflow.workflow_name}</h3>\n        </a>\n        <p>\n          by\n          <a href=\"https://n8n.io/creators/${workflow.author_username}\">\n            ${workflow.author_name}\n          </a>\n          &middot;\n          created on ${DateTime.fromISO(workflow.workflow_created_at).toFormat('DD')}\n        </p>\n        <p>${workflow.workflow_desc}</p>\n      </li>\n    `).join('\\n')}\n    </ul>\n  `)\n  .join('\\n')\n}}"
+      },
+      "id": "4eac66d5-e967-4c16-adb1-6b70cac68144",
+      "name": "Generate HTML Template",
+      "type": "n8n-nodes-base.html",
+      "position": [
+        4180,
+        680
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b965dee8-f3b5-419b-b39a-79bf2b7d04c1",
+              "name": "category",
+              "type": "string",
+              "value": "={{ $('Categories to Items').item.json.category }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "5c55c4e4-da6e-438b-a529-60e4eec43b8a",
+      "name": "Append Category",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        2400,
+        1240
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "content": "## 1. Get Subscribers from Google Sheets\n[Learn more about the Excel node](https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.microsoftexcel)\n\nGoogle Sheets can be an easy way to store a simple list of subscribers who will receive our daily digest. We can also specify only the categories they are interested in.",
+        "width": 440,
+        "color": 7
+      },
+      "id": "bc826937-89c5-4185-9e2a-ced0f6cc20a6",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        260,
+        480
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 2. Fetch Latest Templates from n8n\n[Learn more about the HTTP Request node](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest)\n\nUsing the HTTP request node, we can call the n8n.io template search API to the latest published templates. However, to save on resources, we only want to fetch from categories relevant to our subscribers. To do so:\n1) We only want to fetch latest templates from unique categories amongst all subscribers\n2) Do this fetching once to later reference for all subscribers",
+        "height": 220,
+        "width": 620,
+        "color": 7
+      },
+      "id": "a1af1c0b-debe-4410-817c-b3fbee649308",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        720,
+        1160
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 3. Generate AI Summary For Each Template\n[Read more about the Basic LLM node](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.chainllm)\n\nWhen building our email digest, we'd rather have a shortened and summarized version of each template's description for easier scanning and reading. We can use AI to accomplish this and merge it with the template object.",
+        "height": 180,
+        "width": 580,
+        "color": 7
+      },
+      "id": "88b3cd68-1e09-434d-88d1-d650f85a5751",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1920,
+        1780
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 4. Filter Relevant Templates for Subscriber\n[Read more about the Split Out node](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.splitout)\n\nFor each subscriber, we want to filter out our freshly collected n8n.io templates by the categories relevant to the subscriber as defined in Google Sheets. A \"Remove duplicates\" node can be used to keep track of duplicate templates - as templates can have more than one category and appear twice!",
+        "height": 200,
+        "width": 580,
+        "color": 7
+      },
+      "id": "ae056ecd-dc5b-4a89-8976-d2d511f32da1",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3700,
+        1340
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 5. Generate Daily Digest and Send Via Gmail Node\n\nFinally, we can construct our digest's content using the HTML node and customise it by subscriber as necessary. The Gmail node is then used to send the digest to the subscriber.",
+        "height": 200,
+        "width": 580,
+        "color": 7
+      },
+      "id": "59e29afa-661f-42d6-85dc-5e3b9f7de8dd",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        4140,
+        260
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 1.2 Subscriber von Google Sheets bekommen\n\nFüge eine entsprechende Node hinzu mit der du die Abonennten des Newsletter aus der Google Sheets Tabelle bekommen kannst.\n\nLege auch extern ein Google Sheet an und trage deine eigene E-Mail, sowie abonnierte Kategorien ein, nach dem unten genannten Schema:\n\n### Columns\n- name *(text)*\n- email *(text)*\n- categories *(text, durch komma getrennt)*",
+        "height": 680,
+        "width": 280,
+        "color": 5
+      },
+      "id": "cc99ec1a-03e6-4473-b55c-b6e21b0cd00e",
+      "name": "Sticky Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        780,
+        400
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "d175bfd5-4b12-4faa-8fdf-a48f7da6793f",
+      "name": "For Each Subscriber",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        3440,
+        940
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "content": "## n8n Newsletter Automation\n### This n8n template builds a newsletter (\"daily digest\") delivery service which pulls and summarises the latest n8n.io template in select categories defined by subscribers.\n\nIt's scheduled to run once a day and sends the newsletter directly to subscriber via a nicely formatted email. If you've had trouble keeping up with the latest and greatest templates beign published daily, this workflow can save you a lot of time!\n\n### How it works\n* A scheduled trigger pulls a list of subscribers (email and category preferences) from an Google Sheets document.\n* We work out unique categories amongst all subscribers and only fetch the latest n8n website templates from these categories to save on resources and optimise the number of API calls we make.\n* The fetched templates are summarised via AI to produce a short description which is more suitable for our email format.\n* For each subscriber, we filter and collect only the templates relevant to their category preferences (as defined in the Excel) and ensure that duplicate templates or those which have been \"seen before\" are omitted.\n* A HTML node is then used to generate the email newsletter. HTML emails are the perfect format since we can add links back to the template.\n* Finally, we use the Gmail node to send the email digest to the subscriber.\n\n### How to use\n* Populate your Excel sheet with 3 columns: name, email and categories. Categories is a comma-delimited list of categories which match the n8n template website. \n* The available categories are AI, SecOps, Sales, IT Ops, Marketing, Engineering, DevOps, Building Blocks, Design, Finance, HR, Other, Product and Support.\n* To subscribe a new user, simply add their email to the Excel sheet with at least one category.\n* To unsubscribe a user, remove them from the sheet.\n* If you're not interested in paid templates, you may want to filter them out after fetching them.\n",
+        "height": 880,
+        "width": 500
+      },
+      "id": "247b4892-06f9-4a59-a6bd-ebdb617e60e8",
+      "name": "Sticky Note7",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -280,
+        480
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Has New Workflows?').item.json.email }}",
+        "subject": "=New Workflows for {{ $now.format('DD') }}",
+        "message": "={{\n$json.html\n  .replaceAll('\\n', '')\n  .replaceAll('  ', '')\n  .trim()\n}}",
+        "options": {
+          "senderName": "n8n"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        4540,
+        680
+      ],
+      "id": "901b8bde-c8f9-4bcf-8aa2-51127eb5b418",
+      "name": "Gmail",
+      "webhookId": "93e692e9-d0a1-4ed0-890b-e5681a35c43c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2irGzoHP5qD1Nm3p",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 1.1 Workflow triggern\n\nFüge den korrekten Trigger hinzu, um Täglich um 8 Uhr einen Newsletter an die Abonennten zu verschicken.",
+        "height": 420,
+        "width": 280,
+        "color": 5
+      },
+      "id": "0a336ff5-d5bf-491f-b492-3b670fd4896f",
+      "name": "Sticky Note8",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        420,
+        660
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 3.1 Zusammenfassung mit LLM generieren\n\n* Füge hier ein passendes LLM hinzu um dir eine Zusammenfassung der Punkte zu generieren\n* Füge dem Workflow Summarizer auch noch einen passenden System Prompt hinzu, du kannst diesen hier verwenden:\n\nYou have received a description of a n8n template from the official template gallery. Your task is to summarize the description into one or two sentences. The summary should loosely follow the structure of:\n* identify the goal of the template\n* describe the method or approached implemented\n* highlight which important n8n nodes were used\n\neg. \"Obtain real-time crypto market insights using an AI-powered workflow with CoinMarketCap APIs through Telegram\"\n",
+        "height": 780,
+        "width": 440,
+        "color": 5
+      },
+      "id": "7a126add-10e3-4b43-99e7-5b1432d9ffd7",
+      "name": "Sticky Note9",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2900,
+        1280
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 5.2 Senden an die Subscriber mit Gmail\n\nFüge hier deine Gmail Credentials hinzu",
+        "height": 360,
+        "width": 280,
+        "color": 6
+      },
+      "id": "e2ce7fe6-f920-4d7d-9e0e-c06fcd683585",
+      "name": "Sticky Note10",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        4440,
+        500
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 5.1 If-Else Bedingung\n\nWenn keine Daten vorhanden sind, soll nichts gemacht werden, wenn Daten vorhanden sind, soll ein HTML Template generiert werden und eine Mail verschickt werden.\n\nDas ist deine Bedingung die du prüfst:\n\n``{{ $json.data }}``\n\nes soll überprüft werden ob die länge des Arrays größer als 0 ist\n\nFinde die passende Flow Node und füge sie in den Workflow ein.",
+        "height": 600,
+        "width": 280,
+        "color": 5
+      },
+      "id": "f6f5e484-5c77-4138-be89-73522c6cac0e",
+      "name": "Sticky Note11",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3700,
+        380
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9fca8e33-330a-4e4d-b461-251cd7e5c620",
+              "name": "categories",
+              "type": "array",
+              "value": "={{ $json.categories.split(',') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fffebe92-a06b-4981-adc6-989ab84bda11",
+      "name": "Parse Rows",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1240,
+        860
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "content": "## 1.3 Rohdaten formatieren\n\nDie aus dem Google Sheets extrahierten Daten liegen als JSON vor, wir möchten nun die Daten korrekt strukturieren und aufarbeiten, damit unser Workflow korrekt mit den Daten arbeiten kann.\n\nDafür verwenden wir **Edit Fields** unter dem Punkt Data Transformation.\n\nWenn du aus deinem Google Sheets zuvor einen Test Step ausgeführt hast und Daten gefetched hast, dann sollte im Input Field links ein Table erscheinen, mit den Tabellenspalten name, email, categories. Diese kannst du per Drag and Drop in Fields to set parsen.\n\nAls Beispiel wurde categories schon hinzugefügt. Füge nun auch noch `name` und `email` hinzu, beide vom Typ **string**\n",
+        "height": 820,
+        "width": 280,
+        "color": 6
+      },
+      "id": "f7835eb0-826c-4d58-967b-bd993054a2a9",
+      "name": "Sticky Note12",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1140,
+        260
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 2.1 Array in einzelne Items umwandeln\n\nNun möchten wir das Array mit den einzelnen Kategorien, welche wir abonniert haben in einzelne Items umwandeln, damit im nächsten Schritt der API Aufruf korrekt stattfinden kann. \n\nDafür suchen wir unter Data Transformation die Split Out Node und fügen sie hier ein.\n\n* Als Fields To Split out geben wir **categories** ein das ist das Array, welches wir zu einzelnen items umwandeln wollen\n* Füge einen weiteren Destination Field Name Parameter hinzu und nenne ihn **category**",
+        "height": 700,
+        "width": 280,
+        "color": 5
+      },
+      "id": "5163475b-4ce8-4991-b37c-5f1498001137",
+      "name": "Sticky Note13",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1680,
+        720
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 2.2 HTTP Get Request\n\nMit der HTTP Request Node können wir auf selbst festgelegte APIs aus dem Internet zugreifen. \n\nNun möchten wir auf die n8n API zugreifen, um die neuesten Workflows zu den einzelnen Kategorien zu finden.\n\nUnter dem Menüpunkt Core findest du die HTTP Request Node.\n\n* wähle als Methode GET aus\n* Wir möchten diese URL ansprechen: https://n8n.io/api/product-api/workflows/search\n* aktiviere **Send Query Parameters** und sende folgende Parameter:\n1. **category** mit dem Wert `{{$json.category }}` als Expression\n2. **rows** mit dem Wert 10 um jeweils 10 pro Kategorie zu bekommen\n3. **sort** mit dem Wert `createdAt:desc` um nur die neuesten Einträge zu bekommen\n4. **page** mit dem Wert 1",
+        "height": 860,
+        "width": 280,
+        "color": 5
+      },
+      "id": "5a8a3cb2-0f01-49cf-9204-b2c6e807768c",
+      "name": "Sticky Note14",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2040,
+        560
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Kapitel 2: Aufgabenstellung zum n8n Newsletter Workflow\n\n**Vervollständige diesen unvollständigen n8n Workflow**\n\nDie **blauen Aufgabenkasten** bedeuten, dass du die komplette Node **ergänzen** musst. Bei **lila Aufgabenkasten**, musst du die bereits **bestehende Node** anpassen, achte auch darauf die Nodes **richtig zu verknüpfen**",
+        "height": 220,
+        "width": 500,
+        "color": 3
+      },
+      "id": "bc980645-e728-417f-9211-67a986bc15e0",
+      "name": "Sticky Note15",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -280,
+        240
+      ],
+      "typeVersion": 1
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "For Each Subscriber",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "For Each Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Fields": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Category": {
+      "main": [
+        [
+          {
+            "node": "For Each Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Workflows": {
+      "main": [
+        [
+          {
+            "node": "With User Reference",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten Workflows": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "For Each Category": {
+      "main": [
+        [
+          {
+            "node": "Flatten Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Workflows to Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow to Items": {
+      "main": [
+        [
+          {
+            "node": "Remove Already Seen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflows to Items": {
+      "main": [
+        [
+          {
+            "node": "Workflow Summarizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "For Each Subscriber": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get Relevant Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Already Seen": {
+      "main": [
+        [
+          {
+            "node": "Combine Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "With User Reference": {
+      "main": [
+        [
+          {
+            "node": "For Each Subscriber",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Summarizer": {
+      "main": [
+        [
+          {
+            "node": "Collect Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Unique Categories": {
+      "main": [
+        [
+          {
+            "node": "Append Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate HTML Template": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Relevant Workflows": {
+      "main": [
+        [
+          {
+            "node": "Workflow to Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Rows": {
+      "main": [
+        [
+          {
+            "node": "Get Unique Categories",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c2cb0f7f-c48a-4099-b044-5b97140d2bf1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "95d0d82f39690074bd88268e92434de75bb7a62327e03bd76ce8fcecf6b02208"
+  },
+  "id": "FqzOip9Uxif9MZvN",
+  "tags": []
+}
